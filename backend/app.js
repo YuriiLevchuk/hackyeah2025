@@ -10,6 +10,7 @@ const loginRouter = require('./controllers/login')
 const transportRouter = require('./controllers/transport')
 const eventsRouter = require('./controllers/event')
 const usersRouter = require('./controllers/user')
+const stationRouter = require('./controllers/station')
 
 const app = express()
 
@@ -28,6 +29,7 @@ app.use('/api/transport', transportRouter)
 app.use('/api/event', eventsRouter)
 app.use('/api/user', usersRouter)
 app.use('/api/login', loginRouter)
+app.use('/api/station', stationRouter)
 
 app.use(middleware.unknownEndpoint)
 
