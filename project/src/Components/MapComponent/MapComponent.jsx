@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -11,6 +11,9 @@ import { LatLngBounds } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+import useStops from "../../Hooks/useStops";
+import useVehicles from "../../Hooks/useVehicles";
+
 // Constants
 const MAP_BOUNDS = new LatLngBounds(
   [50.158, 19.699],
@@ -22,8 +25,14 @@ const BASE_ICON_SIZE = 30;
 const MAX_MARKERS = 100;
 const MIN_ZOOM_FOR_ALL_MARKERS = 14;
 
-import useStops from "../../Hooks/useStops";
-import useVehicles from "../../Hooks/useVehicles";
+// Add CSS transition for markers
+const markerStyle = document.createElement("style");
+markerStyle.innerHTML = `
+  .animated-marker {
+    transition: transform 10s linear;
+  }
+`;
+document.head.appendChild(markerStyle);
 
 const MapController = ({ onBoundsChange, onZoomChange }) => {
   const map = useMap();
@@ -53,7 +62,8 @@ const MapComponent = () => {
   const [bounds, setBounds] = useState(null);
   const { stops, loading, error } = useStops();
   const { vehicles } = useVehicles();
-  console.log(vehicles);
+
+  const vehicleRefs = useRef({}); // store refs for vehicle markers
 
   // Memoized icon creation function
   const getIcon = useCallback((currentZoom) => {
@@ -63,10 +73,7 @@ const MapComponent = () => {
       html: `
         <img 
           src="/icons/markers/bus-stop.svg" 
-          style="
-            width:${size}px;
-            height:${size}px;
-          " 
+          style="width:${size}px;height:${size}px;" 
           alt="bus stop"
         />
       `,
@@ -76,81 +83,37 @@ const MapComponent = () => {
     });
   }, []);
 
-  // Filter and limit markers
   const visibleStations = useMemo(() => {
     if (!stops || !bounds) return [];
-    
-    // Filter stops within bounds
-    const inBounds = stops.filter(stop => 
-      bounds.contains([stop.latitude, stop.longitude])
-    );
-
-    // If we have too many markers and zoom is too low, limit the count
+    const inBounds = stops.filter(stop => bounds.contains([stop.latitude, stop.longitude]));
     if (inBounds.length > MAX_MARKERS && zoom < MIN_ZOOM_FOR_ALL_MARKERS) {
-      // Take first MAX_MARKERS stops (you could implement smarter sampling)
       return inBounds.slice(0, MAX_MARKERS);
     }
-
     return inBounds;
   }, [stops, bounds, zoom]);
 
-  // Check if markers are being limited
   const isLimited = useMemo(() => {
     if (!stops || !bounds) return false;
-    const inBounds = stops.filter(stop => 
-      bounds.contains([stop.latitude, stop.longitude])
-    );
+    const inBounds = stops.filter(stop => bounds.contains([stop.latitude, stop.longitude]));
     return inBounds.length > MAX_MARKERS && zoom < MIN_ZOOM_FOR_ALL_MARKERS;
   }, [stops, bounds, zoom]);
 
-  // Calculate statistics
   const stats = useMemo(() => {
     if (!stops || !bounds) return null;
-    
-    const totalInBounds = stops.filter(stop => 
-      bounds.contains([stop.latitude, stop.longitude])
-    ).length;
-
+    const totalInBounds = stops.filter(stop => bounds.contains([stop.latitude, stop.longitude])).length;
     return {
       total: stops.length,
       inViewport: totalInBounds,
       showing: visibleStations.length,
-      isLimited: isLimited
+      isLimited
     };
   }, [stops, bounds, visibleStations.length, isLimited]);
 
-  if (error) {
-    return (
-      <div style={{ 
-        height: "100vh", 
-        width: "100%", 
-        display: "flex", 
-        alignItems: "center", 
-        justifyContent: "center",
-        color: "red"
-      }}>
-        Error loading map: {error}
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div style={{ 
-        height: "100vh", 
-        width: "100%", 
-        display: "flex", 
-        alignItems: "center", 
-        justifyContent: "center" 
-      }}>
-        Loading map...
-      </div>
-    );
-  }
+  if (error) return <div style={{ color: "red" }}>Error loading map: {error}</div>;
+  if (loading) return <div>Loading map...</div>;
 
   return (
     <>
-      {/* Stats overlay */}
       {stats && (
         <div style={{
           position: "absolute",
@@ -166,11 +129,7 @@ const MapComponent = () => {
           <div>Total: {stats.total}</div>
           <div>In view: {stats.inViewport}</div>
           <div>Showing: {stats.showing}</div>
-          {stats.isLimited && (
-            <div>
-              Zoom in to see all stops
-            </div>
-          )}
+          {stats.isLimited && <div>Zoom in to see all stops</div>}
         </div>
       )}
 
@@ -185,42 +144,48 @@ const MapComponent = () => {
         zoomControl={true}
         preferCanvas={true}
       >
-        <MapController 
-          onBoundsChange={setBounds} 
-          onZoomChange={setZoom} 
-        />
-
+        <MapController onBoundsChange={setBounds} onZoomChange={setZoom} />
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
         />
-        
-        {visibleStations.map((stop) => (
+
+        {visibleStations.map(stop => (
           <Marker
             key={stop.station_id}
             position={[stop.latitude, stop.longitude]}
             icon={getIcon(zoom)}
           >
             <Popup>
-              <div>
-                <strong>{stop.station_name}</strong>
-                <br />
-                <small>ID: {stop.station_id}</small>
-              </div>
+              <strong>{stop.station_name}</strong><br/>
+              <small>ID: {stop.station_id}</small>
             </Popup>
           </Marker>
         ))}
-        {vehicles.map((vehicle) => (
+
+        {vehicles.map(vehicle => (
           <Marker
             key={vehicle.id}
             position={[vehicle.lat, vehicle.lon]}
+            ref={ref => {
+              if (ref) {
+                const oldMarker = vehicleRefs.current[vehicle.id];
+                vehicleRefs.current[vehicle.id] = ref;
+                if (oldMarker && oldMarker !== ref) {
+                  ref.setLatLng([vehicle.lat, vehicle.lon]); // smoothly move marker
+                }
+              }
+            }}
+            icon={L.divIcon({
+              html: `<img src="/icons/markers/dot.svg" width="24" height="24" />`,
+              className: "animated-marker",
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            })}
           >
             <Popup>
-              <div>
-                <strong>{vehicle.routeId}</strong>
-                <br />
-                <small>ID: {vehicle.id}</small>
-              </div>
+              <strong>{vehicle.routeId}</strong><br/>
+              <small>ID: {vehicle.id}</small>
             </Popup>
           </Marker>
         ))}
