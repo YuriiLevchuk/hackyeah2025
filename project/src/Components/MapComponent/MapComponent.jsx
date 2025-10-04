@@ -13,8 +13,8 @@ import "leaflet/dist/leaflet.css";
 
 // Constants
 const MAP_BOUNDS = new LatLngBounds(
-  [50.024, 19.872],
-  [50.108, 20.099]
+  [50.158, 19.699],
+  [49.954, 20.277]
 );
 const MAP_CENTER = [50.066, 19.985];
 const INITIAL_ZOOM = 13;
@@ -22,33 +22,7 @@ const BASE_ICON_SIZE = 30;
 const MAX_MARKERS = 100;
 const MIN_ZOOM_FOR_ALL_MARKERS = 14;
 
-// Custom hook for API calls
-const useStops = () => {
-  const [stops, setStops] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchStops = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("http://localhost:3003/api/station");
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        setStops(data);
-      } catch (err) {
-        console.error("Failed to fetch stations:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStops();
-  }, []);
-
-  return { stops, loading, error };
-};
+import useStops from "../../Hooks/useStops";
 
 // Component to handle map events and bounds
 const MapController = ({ onBoundsChange, onZoomChange }) => {

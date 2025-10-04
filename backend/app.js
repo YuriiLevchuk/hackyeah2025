@@ -6,21 +6,18 @@ const config = require('./utils/config')
 const logger = require('./utils/logger')
 const middleware = require('./utils/middleware')
 const loginRouter = require('./controllers/login')
-
 const transportRouter = require('./controllers/transport')
 const eventsRouter = require('./controllers/event')
 const usersRouter = require('./controllers/user')
 const stationRouter = require('./controllers/station')
+const vehicleRouter = require('./controllers/vehiclepos')
 
 const app = express()
 
-// // connect to mongodb //
-//console.log(config.MONGODB_URI)
 mongoose.connect(config.MONGODB_URI)
-  .then( () => logger.info('Connected to mongodb\n---------'))
-  .catch( () => logger.info('Connection to mongodb failed\n---------'))
+  .then(() => logger.info('Connected to mongodb\n---------'))
+  .catch(() => logger.info('Connection to mongodb failed\n---------'))
 
-// // middleware //
 app.use(cors())
 app.use(express.json())
 app.use(express.static('dist'))
@@ -30,6 +27,7 @@ app.use('/api/event', eventsRouter)
 app.use('/api/user', usersRouter)
 app.use('/api/login', loginRouter)
 app.use('/api/station', stationRouter)
+app.use('/api/vehiclepos', vehicleRouter)
 
 app.use(middleware.unknownEndpoint)
 
