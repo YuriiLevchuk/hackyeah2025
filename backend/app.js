@@ -7,6 +7,7 @@ const logger = require('./utils/logger')
 const middleware = require('./utils/middleware')
 
 const transportRouter = require('./controllers/transport')
+const eventsRouter = require('./controllers/event')
 
 const app = express()
 
@@ -22,6 +23,8 @@ app.use(express.json())
 app.use(express.static('dist'))
 
 app.use('/api/transport', transportRouter)
+app.use('/api/events', eventsRouter)
+
 app.use(middleware.unknownEndpoint)
 
 module.exports = app
