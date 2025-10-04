@@ -1,6 +1,17 @@
-function App() {
+import Maps from "./Pages/Maps/Maps"
+import Home from "./Pages/Home/Home"
+import Navbar from "./Components/Navbar/Navbar"
+import { Routes, Route } from "react-router-dom"
+
+const App =() => {
  return(
-  <p>TEST</p>
+  <div>
+    <Navbar/>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/maps" element={<Maps />} />
+    </Routes>
+  </div>
  )
 }
 
