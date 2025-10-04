@@ -1,0 +1,31 @@
+.homeWrapper{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.homeWrapper img{
+  object-fit: cover;
+  width: 100vw;
+  
+}
+
+.title{
+  background-image: url('../../../public/assets/train.jpg');
+  width: 100vw;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  
+  font-size: 100px;
+  color: white;
+  -webkit-text-stroke-width: 3px;
+  -webkit-text-stroke-color: black;
+
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

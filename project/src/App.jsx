@@ -5,7 +5,7 @@ import { Routes, Route } from "react-router-dom"
 
 const App =() => {
  return(
-  <div>
+  <div className="open-sans-font">
     <Navbar/>
     <Routes>
       <Route path="/" element={<Home />} />

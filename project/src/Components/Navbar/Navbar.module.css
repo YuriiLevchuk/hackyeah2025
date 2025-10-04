@@ -1,26 +1,35 @@
+@import '../../styles/vars.css';
+
 .navbar{
   width: 100%;
   display: flex;
   align-items: left;
   justify-content: left;
   padding: 0 20px;
-  background-color: lightgrey;
+  background-color: var(--color-bg);
   height: 50px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 2px solid var(--color-text);
 }
 
 .navbar a{
-  color: black;
+  color: var(--color-text);
   padding: 14px 16px;
   text-decoration: none;
   font-size: 17px;
+  transition: all 0.3s ease;
 }
 
 .navbar a:hover{
-  background-color: #ddd;
-  color: black;
+  background-color: var(--color-primary);
+  color: var(--color-bg);;
 }
 
 .navbar img{
-  width: 50px;
-  height: 50px;
+  margin: 10px;
+  width: 30px;
+  height: 30px;
 }
+

@@ -1,0 +1,17 @@
+:root {
+  --color-primary: #3498db;
+  --color-warning: #f1c40f;
+  --color-problem: #e74c3c;
+  --color-bg: #f1f1f1;
+  --color-text: #212121;
+  --color-text-secondary: #757575;
+}
+
+.dark {
+  --color-primary: #3498db;
+  --color-warning: #f1c40f;
+  --color-problem: #e74c3c;
+  --color-bg: #212121;
+  --color-text: #f1f1f1;
+  --color-text-secondary: #757575;
+}
