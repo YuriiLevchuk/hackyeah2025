@@ -5,9 +5,11 @@ const mongoose = require('mongoose')
 const config = require('./utils/config')
 const logger = require('./utils/logger')
 const middleware = require('./utils/middleware')
+const loginRouter = require('./controllers/login')
 
 const transportRouter = require('./controllers/transport')
 const eventsRouter = require('./controllers/event')
+const usersRouter = require('./controllers/user')
 
 const app = express()
 
@@ -23,7 +25,9 @@ app.use(express.json())
 app.use(express.static('dist'))
 
 app.use('/api/transport', transportRouter)
-app.use('/api/events', eventsRouter)
+app.use('/api/event', eventsRouter)
+app.use('/api/user', usersRouter)
+app.use('/api/login', loginRouter)
 
 app.use(middleware.unknownEndpoint)
 

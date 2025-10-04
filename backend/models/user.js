@@ -5,11 +5,17 @@ const userSchema = new mongoose.Schema({
   first_name: String,
   last_name: String,
   email: String,
-  password_hash: String,
-  created_at: Date,
-  updated_at: Date,
+  password_hash: String
 });
 
-const User = mongoose.model('Event', userSchema, 'Event');
+userSchema.set("toJSON", {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString();
+    delete returnedObject._id;
+    delete returnedObject.__v;
+  }
+});
+
+const User = mongoose.model('User', userSchema, 'User');
 
 module.exports = User;

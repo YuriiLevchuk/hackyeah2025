@@ -23,8 +23,7 @@
 }
 
 .navbar a:hover{
-  background-color: var(--color-primary);
-  color: var(--color-bg);;
+  background-color: var(--color-bg-secondary);
 }
 
 .navbar img{
@@ -33,3 +32,7 @@
   height: 30px;
 }
 
+.navbarLink .active{
+  background-color: var(--color-primary);
+  color: var(--color-bg);
+}
