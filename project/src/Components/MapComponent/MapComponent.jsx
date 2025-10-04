@@ -23,8 +23,8 @@ const MAX_MARKERS = 100;
 const MIN_ZOOM_FOR_ALL_MARKERS = 14;
 
 import useStops from "../../Hooks/useStops";
+import useVehicles from "../../Hooks/useVehicles";
 
-// Component to handle map events and bounds
 const MapController = ({ onBoundsChange, onZoomChange }) => {
   const map = useMap();
 
@@ -41,7 +41,6 @@ const MapController = ({ onBoundsChange, onZoomChange }) => {
     }
   });
 
-  // Initial bounds
   useEffect(() => {
     onBoundsChange(map.getBounds());
   }, [map, onBoundsChange]);
@@ -53,6 +52,8 @@ const MapComponent = () => {
   const [zoom, setZoom] = useState(INITIAL_ZOOM);
   const [bounds, setBounds] = useState(null);
   const { stops, loading, error } = useStops();
+  const { vehicles } = useVehicles();
+  console.log(vehicles);
 
   // Memoized icon creation function
   const getIcon = useCallback((currentZoom) => {
@@ -76,7 +77,7 @@ const MapComponent = () => {
   }, []);
 
   // Filter and limit markers
-  const visibleMarkers = useMemo(() => {
+  const visibleStations = useMemo(() => {
     if (!stops || !bounds) return [];
     
     // Filter stops within bounds
@@ -113,10 +114,10 @@ const MapComponent = () => {
     return {
       total: stops.length,
       inViewport: totalInBounds,
-      showing: visibleMarkers.length,
+      showing: visibleStations.length,
       isLimited: isLimited
     };
-  }, [stops, bounds, visibleMarkers.length, isLimited]);
+  }, [stops, bounds, visibleStations.length, isLimited]);
 
   if (error) {
     return (
@@ -194,7 +195,7 @@ const MapComponent = () => {
           attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
         />
         
-        {visibleMarkers.map((stop) => (
+        {visibleStations.map((stop) => (
           <Marker
             key={stop.station_id}
             position={[stop.latitude, stop.longitude]}
@@ -205,6 +206,20 @@ const MapComponent = () => {
                 <strong>{stop.station_name}</strong>
                 <br />
                 <small>ID: {stop.station_id}</small>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+        {vehicles.map((vehicle) => (
+          <Marker
+            key={vehicle.id}
+            position={[vehicle.lat, vehicle.lon]}
+          >
+            <Popup>
+              <div>
+                <strong>{vehicle.routeId}</strong>
+                <br />
+                <small>ID: {vehicle.id}</small>
               </div>
             </Popup>
           </Marker>
