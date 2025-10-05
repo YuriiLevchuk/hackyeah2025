@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+let updates = 0;
 
 const useVehicles = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -10,6 +11,7 @@ const useVehicles = () => {
 
     const fetchVehicles = async () => {
       try {
+        console.log("update", updates++);
         const response = await fetch("http://localhost:3003/api/vehiclepos");
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();

@@ -29,7 +29,7 @@ const MIN_ZOOM_FOR_ALL_MARKERS = 14;
 const markerStyle = document.createElement("style");
 markerStyle.innerHTML = `
   .animated-marker {
-    transition: transform 10s linear;
+    transition: transform s linear;
   }
 `;
 document.head.appendChild(markerStyle);
@@ -57,13 +57,49 @@ const MapController = ({ onBoundsChange, onZoomChange }) => {
   return null;
 };
 
+// Memoized Vehicle Marker Component
+const VehicleMarker = React.memo(({ vehicle }) => {
+  const markerRef = useRef();
+  
+  useEffect(() => {
+    // Update marker position when vehicle data changes
+    if (markerRef.current) {
+      markerRef.current.setLatLng([vehicle.lat, vehicle.lon]);
+    }
+  }, [vehicle.lat, vehicle.lon]);
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={[vehicle.lat, vehicle.lon]}
+      icon={L.divIcon({
+        html: `<img src="/icons/markers/dot.svg" width="24" height="24" />`,
+        className: "animated-marker",
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      })}
+    >
+      <Popup>
+        <strong>{vehicle.routeId}</strong><br/>
+        <small>ID: {vehicle.id}</small>
+      </Popup>
+    </Marker>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison function - only re-render if position or key data changes
+  return (
+    prevProps.vehicle.lat === nextProps.vehicle.lat &&
+    prevProps.vehicle.lon === nextProps.vehicle.lon &&
+    prevProps.vehicle.routeId === nextProps.vehicle.routeId &&
+    prevProps.vehicle.id === nextProps.vehicle.id
+  );
+});
+
 const MapComponent = () => {
   const [zoom, setZoom] = useState(INITIAL_ZOOM);
   const [bounds, setBounds] = useState(null);
   const { stops, loading, error } = useStops();
   const { vehicles } = useVehicles();
-
-  const vehicleRefs = useRef({}); // store refs for vehicle markers
 
   // Memoized icon creation function
   const getIcon = useCallback((currentZoom) => {
@@ -92,6 +128,14 @@ const MapComponent = () => {
     return inBounds;
   }, [stops, bounds, zoom]);
 
+  // Filter vehicles within bounds
+  const visibleVehicles = useMemo(() => {
+    if (!vehicles || !bounds) return [];
+    return vehicles.filter(vehicle => 
+      vehicle && vehicle.lat && vehicle.lon && bounds.contains([vehicle.lat, vehicle.lon])
+    );
+  }, [vehicles, bounds]);
+
   const isLimited = useMemo(() => {
     if (!stops || !bounds) return false;
     const inBounds = stops.filter(stop => bounds.contains([stop.latitude, stop.longitude]));
@@ -105,9 +149,10 @@ const MapComponent = () => {
       total: stops.length,
       inViewport: totalInBounds,
       showing: visibleStations.length,
-      isLimited
+      isLimited,
+      vehicles: visibleVehicles.length
     };
-  }, [stops, bounds, visibleStations.length, isLimited]);
+  }, [stops, bounds, visibleStations.length, isLimited, visibleVehicles.length]);
 
   if (error) return <div style={{ color: "red" }}>Error loading map: {error}</div>;
   if (loading) return <div>Loading map...</div>;
@@ -129,6 +174,7 @@ const MapComponent = () => {
           <div>Total: {stats.total}</div>
           <div>In view: {stats.inViewport}</div>
           <div>Showing: {stats.showing}</div>
+          <div>Vehicles: {stats.vehicles}</div>
           {stats.isLimited && <div>Zoom in to see all stops</div>}
         </div>
       )}
@@ -163,31 +209,11 @@ const MapComponent = () => {
           </Marker>
         ))}
 
-        {vehicles.map(vehicle => (
-          <Marker
+        {visibleVehicles.map(vehicle => (
+          <VehicleMarker
             key={vehicle.id}
-            position={[vehicle.lat, vehicle.lon]}
-            ref={ref => {
-              if (ref) {
-                const oldMarker = vehicleRefs.current[vehicle.id];
-                vehicleRefs.current[vehicle.id] = ref;
-                if (oldMarker && oldMarker !== ref) {
-                  ref.setLatLng([vehicle.lat, vehicle.lon]); // smoothly move marker
-                }
-              }
-            }}
-            icon={L.divIcon({
-              html: `<img src="/icons/markers/dot.svg" width="24" height="24" />`,
-              className: "animated-marker",
-              iconSize: [24, 24],
-              iconAnchor: [12, 12]
-            })}
-          >
-            <Popup>
-              <strong>{vehicle.routeId}</strong><br/>
-              <small>ID: {vehicle.id}</small>
-            </Popup>
-          </Marker>
+            vehicle={vehicle}
+          />
         ))}
       </MapContainer>
     </>
