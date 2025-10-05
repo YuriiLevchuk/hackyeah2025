@@ -11,6 +11,7 @@ import { LatLngBounds } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+import useVehicleDetails from "../../Hooks/useVehicleDetails";
 import useStops from "../../Hooks/useStops";
 import useVehicles from "../../Hooks/useVehicles";
 
@@ -29,7 +30,7 @@ const MIN_ZOOM_FOR_ALL_MARKERS = 14;
 const markerStyle = document.createElement("style");
 markerStyle.innerHTML = `
   .animated-marker {
-    transition: transform s linear;
+    transition: transform 30s linear;
   }
 `;
 document.head.appendChild(markerStyle);
@@ -57,12 +58,11 @@ const MapController = ({ onBoundsChange, onZoomChange }) => {
   return null;
 };
 
-// Memoized Vehicle Marker Component
 const VehicleMarker = React.memo(({ vehicle }) => {
   const markerRef = useRef();
+  const { setVehicleDetails} = useVehicleDetails()
   
   useEffect(() => {
-    // Update marker position when vehicle data changes
     if (markerRef.current) {
       markerRef.current.setLatLng([vehicle.lat, vehicle.lon]);
     }
@@ -72,6 +72,13 @@ const VehicleMarker = React.memo(({ vehicle }) => {
     <Marker
       ref={markerRef}
       position={[vehicle.lat, vehicle.lon]}
+      eventHandlers={{
+        click: () => {
+          setVehicleDetails(vehicle);
+          console.log(vehicle);
+          // You can also set state here to show a custom popup or sidebar
+        }
+      }}
       icon={L.divIcon({
         html: `<img src="/icons/markers/dot.svg" width="24" height="24" />`,
         className: "animated-marker",
@@ -79,10 +86,6 @@ const VehicleMarker = React.memo(({ vehicle }) => {
         iconAnchor: [12, 12]
       })}
     >
-      <Popup>
-        <strong>{vehicle.routeId}</strong><br/>
-        <small>ID: {vehicle.id}</small>
-      </Popup>
     </Marker>
   );
 }, (prevProps, nextProps) => {
